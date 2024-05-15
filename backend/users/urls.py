@@ -1,11 +1,14 @@
 from django.urls import path, include
-
-from backend.users.views import UsersViewSet
-
+from rest_framework.routers import DefaultRouter
+from .views import UserViewSet, FollowViewSet
 
 app_name = 'users'
 
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'follows', FollowViewSet)
+
 urlpatterns = [
-    path('users/', UsersViewSet),
+    path('users/', UserViewSet),
     path('auth/', include('djoser.urls.authtoken')),
 ]
