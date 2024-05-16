@@ -5,11 +5,25 @@ from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
 
 User = get_user_model()
 
+class CustomUserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password', 'email')
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email')
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'role', 'date_joined')
-
 
 class FollowSerializer(serializers.ModelSerializer):
     follower = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
@@ -19,18 +33,15 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ('id', 'follower', 'following')
 
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name', 'slug']
 
-
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ['id', 'name', 'measurement_unit']
-
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     ingredient = IngredientSerializer()
@@ -38,7 +49,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ['id', 'ingredient', 'amount']
-
 
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True)
@@ -58,3 +68,22 @@ class RecipeSerializer(serializers.ModelSerializer):
             'is_favorited',
             'is_in_shopping_cart'
         ]
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = [
+            'id',
+            'name',
+            'ingredients',
+            'tags',
+            'image',
+            'text',
+            'cooking_time'
+        ]
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name')

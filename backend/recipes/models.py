@@ -80,3 +80,25 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'{self.ingredient.name} в {self.recipe.name}'
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        unique_together = ['user', 'recipe']
+
+    def __str__(self):
+        return f'{self.user.username} -> {self.recipe.name}'

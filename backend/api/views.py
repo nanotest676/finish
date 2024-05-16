@@ -10,13 +10,17 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.pdfmetrics import registerFont
 
-from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredients, ShoppingCart, Tag
-from users.models import Subscription, User
+from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
+from users.models import Follow
+from django.contrib.auth import get_user_model
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (CustomUserCreateSerializer, CustomUserSerializer, IngredientSerializer, 
-                          RecipeCreateSerializer, RecipeSerializer, SubscriptionSerializer, TagSerializer)
+from .serializers import (
+    CustomUserCreateSerializer, CustomUserSerializer, IngredientSerializer,
+    RecipeCreateSerializer, RecipeSerializer, SubscriptionSerializer, TagSerializer, UserSerializer
+)
 
+User = get_user_model()
 
 class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     queryset = User.objects.all()
@@ -29,7 +33,7 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListM
 
     @action(detail=False, permission_classes=[permissions.IsAuthenticated])
     def subscriptions(self, request):
-        subscriptions = User.objects.filter(following__user=request.user)
+        subscriptions = User.objects.filter(following__follower=request.user)
         page = self.paginate_queryset(subscriptions)
         if page is not None:
             serializer = SubscriptionSerializer(page, many=True, context={'request': request})
@@ -44,18 +48,17 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListM
         if request.method == 'POST':
             if author == user:
                 return Response({'error': 'You cannot subscribe to yourself.'}, status=status.HTTP_400_BAD_REQUEST)
-            if Subscription.objects.filter(user=user, author=author).exists():
+            if Follow.objects.filter(follower=user, following=author).exists():
                 return Response({'error': 'Already subscribed.'}, status=status.HTTP_400_BAD_REQUEST)
-            Subscription.objects.create(user=user, author=author)
+            Follow.objects.create(follower=user, following=author)
             serializer = SubscriptionSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            subscription = Subscription.objects.filter(user=user, author=author)
+            subscription = Follow.objects.filter(follower=user, following=author)
             if subscription.exists():
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response({'error': 'Subscription does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class SelfUserView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -114,10 +117,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         return self._create_or_delete_relation(Favorite, request, pk)
 
-    @action(methods=['post', 'delete'], detail=True, permission_classes=[permissions.IsAuthenticated])
-    def shopping_cart(self, request, pk=None):
-        return self._create_or_delete_relation(ShoppingCart, request, pk)
-
     def _create_or_delete_relation(self, model, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
@@ -126,35 +125,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if instance.exists():
                 return Response({'error': f'This recipe is already in your {model.__name__}.'}, status=status.HTTP_400_BAD_REQUEST)
             model.objects.create(user=user, recipe=recipe)
-            serializer = RecipeSerializer(recipe, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            if not instance.exists():
-                return Response({'error': f'This recipe is not in your {model.__name__}.'}, status=status.HTTP_400_BAD_REQUEST)
-            instance.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, permission_classes=[permissions.IsAuthenticated])
-    def download_shopping_cart(self, request):
-        ingredients = RecipeIngredients.objects.filter(recipe__shopping__user=request.user).order_by('ingredient')
-        cart = ingredients.values('ingredient__name', 'ingredient__measurement_unit').annotate(total=Sum('amount'))
-
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.pdf"'
-        p = canvas.Canvas(response, pagesize=A4)
-        registerFont(TTFont('FreeSans', 'FreeSans.ttf'))
-        p.setFont('FreeSans', 16)
-
-        p.drawString(100, 800, 'Shopping List')
-        y = 750
-        for item in cart:
-            p.drawString(100, y, f"{item['ingredient__name']} - {item['total']} {item['ingredient__measurement_unit']}")
-            y -= 25
-            if y < 50:
-                p.showPage()
-                p.setFont('FreeSans', 16)
-                y = 750
-
-        p.showPage()
-        p.save()
-        return response
+            if instance.exists():
+                instance.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({'error': f'This recipe is not in your {model.__name__}.'}, status=status.HTTP_400_BAD_REQUEST)
