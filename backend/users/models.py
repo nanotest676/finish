@@ -1,11 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-
 class UserRole(models.TextChoices):
     USER = 'user'
     ADMIN = 'admin'
-
 
 class CustomUser(AbstractUser):
     username = models.CharField(
@@ -40,7 +38,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
-
 
 class Follow(models.Model):
     follower = models.ForeignKey(

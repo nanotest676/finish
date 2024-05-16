@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'role', 'date_joined')
 
 class FollowSerializer(serializers.ModelSerializer):
-    follower = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
+    follower = serializers.SlugRelatedField(slug_field='username', read_only=True)
     following = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
 
     class Meta:

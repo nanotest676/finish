@@ -5,14 +5,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER=your_user
-      - POSTGRES_PASSWORD=your_password
-      - POSTGRES_DB=your_db
+      POSTGRES_USER: your_user
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: your_db
 
   backend:
     build:
       context: ../backend
-      dockerfile: Dockerfile
     volumes:
       - ../backend/:/code
     command: python manage.py runserver 0.0.0.0:8000
@@ -21,16 +20,15 @@ services:
     depends_on:
       - db
     environment:
-      - DB_NAME=your_db
-      - DB_HOST=db
-      - DB_PORT=5432
-      - POSTGRES_USER=your_user
-      - POSTGRES_PASSWORD=your_password
+      DB_NAME: your_db
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_USER: your_user
+      POSTGRES_PASSWORD: your_password
 
   frontend:
     build:
       context: ../frontend
-      dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
 
@@ -41,7 +39,7 @@ services:
     volumes:
       - ./nginx-local.conf:/etc/nginx/nginx.conf
       - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
+      - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
       - frontend

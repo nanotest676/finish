@@ -1,18 +1,13 @@
 import os
 
-# Базовая директория проекта
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Секретный ключ для Django
 SECRET_KEY = 'your_secret_key_here'
 
-# Режим отладки
 DEBUG = os.getenv('DEBUG', default='True') == 'True'
 
-# Разрешенные хосты (в продакшене нужно указать домены вашего сайта)
 ALLOWED_HOSTS = ['127.0.0.1', os.getenv('DOMAIN', default='localhost')]
 
-# Подключение установленных приложений
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -24,10 +19,10 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework',
     'rest_framework.authtoken',
-    'users'
+    'users',
+    'recipes',
 ]
 
-# Middleware классы
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -38,7 +33,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Настройки шаблонов
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -55,25 +49,24 @@ TEMPLATES = [
     },
 ]
 
-# Настройки баз данных
+WSGI_APPLICATION = 'foodgram.wsgi.application'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# Настройки локализации и временной зоны
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Статические файлы (CSS, JavaScript, картинки)
 STATIC_URL = '/static/'
