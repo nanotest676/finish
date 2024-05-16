@@ -1,4 +1,5 @@
-version: '3.3'
+version: '3.7'
+
 services:
   db:
     image: postgres:13
@@ -9,13 +10,11 @@ services:
       - POSTGRES_PASSWORD=your_password
       - POSTGRES_DB=your_db
 
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-    volumes:
-      - ../backend/:/code
+  web:
+    build: .
     command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
     ports:
       - "8000:8000"
     depends_on:
@@ -27,24 +26,14 @@ services:
       - POSTGRES_USER=your_user
       - POSTGRES_PASSWORD=your_password
 
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    volumes:
-      - ../frontend/:/app/result_build/
-
   nginx:
-    image: nginx:1.19.3
+    image: nginx:latest
     ports:
       - "80:80"
     volumes:
       - ./nginx-local.conf:/etc/nginx/nginx.conf
-      - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:
-      - backend
-      - frontend
+      - web
 
 volumes:
   postgres_data:
