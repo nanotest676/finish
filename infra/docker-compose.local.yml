@@ -26,6 +26,14 @@ services:
     depends_on:
       - db
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ../frontend/:/app/result_build/
+
+
   nginx:
     build: .
     ports:
