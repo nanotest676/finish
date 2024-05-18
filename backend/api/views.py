@@ -16,8 +16,8 @@ from django.contrib.auth import get_user_model
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
-    CustomUserCreateSerializer, CustomUserSerializer, IngredientSerializer,
-    RecipeCreateSerializer, RecipeSerializer, SubscriptionSerializer, TagSerializer, UserSerializer
+    UserCreateSerializer, UserDetailSerializer, IngredientSerializer,
+    RecipeWriteSerializer, RecipeReadSerializer, SubscriptionSerializer, TagSerializer, UserSerializer
 )
 
 User = get_user_model()
@@ -28,8 +28,8 @@ class UserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListM
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return CustomUserCreateSerializer
-        return CustomUserSerializer
+            return UserCreateSerializer
+        return UserDetailSerializer
 
     @action(detail=False, permission_classes=[permissions.IsAuthenticated])
     def subscriptions(self, request):
@@ -64,15 +64,15 @@ class SelfUserView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        serializer = CustomUserSerializer(request.user, context={'request': request})
+        serializer = UserDetailSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
 
-class SetPasswordRetypeView(views.APIView):
+class SetPasswordView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = CustomSetPasswordRetypeSerializer(data=request.data, context={'request': request})
+        serializer = SetPasswordSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             request.user.set_password(serializer.validated_data['new_password'])
             request.user.save()
@@ -104,8 +104,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['create', 'partial_update']:
-            return RecipeCreateSerializer
-        return RecipeSerializer
+            return RecipeWriteSerializer
+        return RecipeReadSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -115,9 +115,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post', 'delete'], detail=True, permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk=None):
-        return self._create_or_delete_relation(Favorite, request, pk)
+        return self._manage_favorite(Favorite, request, pk)
 
-    def _create_or_delete_relation(self, model, request, pk):
+    def _manage_favorite(self, model, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         instance = model.objects.filter(user=user, recipe=recipe)

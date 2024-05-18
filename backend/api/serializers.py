@@ -5,7 +5,7 @@ from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
 
 User = get_user_model()
 
-class CustomUserCreateSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'password', 'email')
@@ -15,7 +15,7 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
@@ -50,7 +50,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'ingredient', 'amount']
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeReadSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True)
     tags = TagSerializer(many=True)
 
@@ -69,7 +69,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart'
         ]
 
-class RecipeCreateSerializer(serializers.ModelSerializer):
+class RecipeWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = [
@@ -81,7 +81,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         ]
-
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
