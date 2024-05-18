@@ -11,10 +11,10 @@ services:
       POSTGRES_DB: ${DB_NAME}
 
   web:
-    build: ./backend
+    build: ../backend
     command: gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - ./backend:/code
+      - ../backend:/code
     ports:
       - "8000:8000"
     depends_on:
@@ -28,9 +28,9 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
     depends_on:
       - web
 
