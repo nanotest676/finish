@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.8'
 
 services:
   db:
@@ -15,39 +15,28 @@ services:
     command: gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ../backend:/code
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
+    expose:
+      - 8000
     environment:
       DB_NAME: ${DB_NAME}
       DB_HOST: db
       DB_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
-  frontend:
-    build:
-      context: ../frontend
-    volumes:
-      - ../frontend:/app
     depends_on:
-      - web
+      - db
 
   nginx:
-    image: nginx:1.21.3-alpine
+    build: .
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./nginx-local.conf:/etc/nginx/conf.d/default.conf
-      - static_data:/var/www/static/
-      - media_data:/var/www/media/
+      - static_volume:/code/static
+      - media_volume:/code/media
     depends_on:
-      - frontend
       - web
 
 volumes:
   postgres_data:
-  static_data:
-  media_data:
+  static_volume:
+  media_volume:
